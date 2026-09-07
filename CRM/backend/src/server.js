@@ -27,7 +27,7 @@ const start = async () => {
     console.warn('[Jobs] Could not start webhook retry worker:', err.message);
   }
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`[Server] Meta CRM backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
   });
 
