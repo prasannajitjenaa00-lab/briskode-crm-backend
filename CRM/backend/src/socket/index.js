@@ -5,10 +5,9 @@ let io = null;
 
 const initSocket = (server) => {
   const { Server } = require('socket.io');
-  const clientOrigin = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/+$/, '') : '*';
   io = new Server(server, {
     cors: {
-      origin: clientOrigin,
+      origin: true,
       credentials: true,
     },
   });
@@ -32,7 +31,7 @@ const initSocket = (server) => {
     socket.join(`user:${userId}`);
     if (socket.user.role === 'super_admin') socket.join('super_admins');
 
-    socket.on('disconnect', () => {});
+    socket.on('disconnect', () => { });
   });
 
   return io;
