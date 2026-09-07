@@ -1,0 +1,10 @@
+{
+  "name": "briskode-crm-backend-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-backend": "npm --prefix CRM/backend install",
+    "build": "npm --prefix CRM/backend install",
+    "start": "npm --prefix CRM/backend start"
+  }
+}
