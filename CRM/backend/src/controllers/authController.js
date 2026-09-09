@@ -9,8 +9,8 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/generate
 const isProduction = process.env.NODE_ENV === 'production';
 const REFRESH_COOKIE_OPTS = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? 'none' : 'lax',
+  secure: true,
+  sameSite: 'none',
   maxAge: 30 * 24 * 60 * 60 * 1000,
 };
 
@@ -26,8 +26,12 @@ const issueTokens = async (res, user, req) => {
     ip: req.ip,
   });
 
-  res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTS);
-  return accessToken;
+  try {
+    res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTS);
+  } catch (err) {
+    // Cookie error fallback
+  }
+  return { accessToken, refreshToken };
 };
 
 // POST /api/auth/login
@@ -42,17 +46,17 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'This account has been deactivated.');
   }
 
-  const accessToken = await issueTokens(res, user, req);
+  const { accessToken, refreshToken } = await issueTokens(res, user, req);
   user.lastActive = 'Active now';
   await user.save({ validateBeforeSave: false });
 
   const safeUser = await User.findById(user._id);
-  ok(res, { user: safeUser, accessToken }, 'Logged in successfully');
+  ok(res, { user: safeUser, accessToken, refreshToken }, 'Logged in successfully');
 });
 
 // POST /api/auth/refresh
 const refresh = asyncHandler(async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  const token = req.body?.refreshToken || req.cookies?.refreshToken;
   if (!token) throw new ApiError(401, 'No refresh token provided.');
 
   const stored = await RefreshToken.findOne({ token, revoked: false });
@@ -69,16 +73,18 @@ const refresh = asyncHandler(async (req, res) => {
   if (!user) throw new ApiError(401, 'User no longer exists.');
 
   const accessToken = generateAccessToken(user);
-  ok(res, { accessToken }, 'Token refreshed');
+  ok(res, { accessToken, refreshToken: token }, 'Token refreshed');
 });
 
 // POST /api/auth/logout
 const logout = asyncHandler(async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  const token = req.body?.refreshToken || req.cookies?.refreshToken;
   if (token) {
     await RefreshToken.updateOne({ token }, { revoked: true });
   }
-  res.clearCookie('refreshToken', REFRESH_COOKIE_OPTS);
+  try {
+    res.clearCookie('refreshToken', REFRESH_COOKIE_OPTS);
+  } catch (e) {}
   ok(res, null, 'Logged out successfully');
 });
 
