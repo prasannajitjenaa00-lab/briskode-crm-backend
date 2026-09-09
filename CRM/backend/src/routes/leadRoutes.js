@@ -17,5 +17,7 @@ router.patch('/:id/follow-up/toggle', ctrl.toggleLeadFollowUp);
 router.patch('/:id/pipeline-category/toggle', ctrl.toggleLeadPipelineCategory);
 router.patch('/:id/follow-up-action', ctrl.updateLeadFollowUpAction);
 router.post('/:id/notes', ctrl.addLeadNote);
+router.post('/bulk-delete', requirePermission('canManageLeads'), ctrl.bulkDeleteLeads);
+router.delete('/:id', requirePermission('canManageLeads'), ctrl.deleteLead);
 
 module.exports = router;

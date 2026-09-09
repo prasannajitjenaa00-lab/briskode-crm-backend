@@ -62,6 +62,11 @@ const leadSchema = new mongoose.Schema(
     isDuplicate: { type: Boolean, default: false },
     duplicateOfLead: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead' },
     convertedToCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+
+    // Lead Requirements & Testing Tool Flags
+    requirements: { type: String },
+    isTestingLead: { type: Boolean, default: false },
+    testingToolRemark: { type: String },
   },
   { timestamps: true }
 );

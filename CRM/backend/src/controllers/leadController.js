@@ -151,13 +151,50 @@ const exportLeadsCSV = asyncHandler(async (req, res) => {
 
   if (!leads.length) throw new ApiError(400, 'No leads available to export.');
 
-  const fields = ['_id', 'fullName', 'email', 'phone', 'company', 'source', 'campaignName', 'status', 'estimatedValue', 'score', 'dateCaptured'];
+  const fields = [
+    '_id',
+    'fullName',
+    'jobTitle',
+    'email',
+    'phone',
+    'company',
+    'employeeCount',
+    'requirements',
+    'source',
+    'campaignName',
+    'status',
+    'isTestingLead',
+    'testingToolRemark',
+    'estimatedValue',
+    'score',
+    'dateCaptured',
+  ];
   const parser = new Parser({ fields });
   const csv = parser.parse(leads);
 
   res.header('Content-Type', 'text/csv');
   res.attachment(`meta_leads_export_${new Date().toISOString().split('T')[0]}.csv`);
   res.send(csv);
+});
+
+// DELETE /api/leads/:id
+const deleteLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.findById(req.params.id);
+  if (!lead) throw new ApiError(404, 'Lead not found.');
+
+  await Lead.findByIdAndDelete(req.params.id);
+  ok(res, { id: req.params.id }, 'Lead deleted successfully');
+});
+
+// POST /api/leads/bulk-delete
+const bulkDeleteLeads = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ApiError(400, 'Please provide an array of lead IDs to delete.');
+  }
+
+  const result = await Lead.deleteMany({ _id: { $in: ids } });
+  ok(res, { deletedCount: result.deletedCount, ids }, `${result.deletedCount} leads deleted successfully`);
 });
 
 module.exports = {
@@ -171,4 +208,6 @@ module.exports = {
   updateLeadFollowUpAction,
   addLeadNote,
   exportLeadsCSV,
+  deleteLead,
+  bulkDeleteLeads,
 };
